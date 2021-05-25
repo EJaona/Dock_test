@@ -26,9 +26,9 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: "12.x"
-      - name: "Install global packages"
+      - name: "npm install"
         run: npm install
-      - name: "Start backend"
+      - name: "Start server, and run newman"
         run: |
           npm start &
           sleep 10
