@@ -9,4 +9,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: testing
-        run: echo Enooka
+        run: ./
+      - name: newman
+        run: npm run newman
