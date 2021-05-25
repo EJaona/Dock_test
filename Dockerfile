@@ -1,22 +1,8 @@
-FROM node:10
-USER root
+# Container image that runs your code
+FROM alpine:3.10
 
-# Create app directory
-WORKDIR /src/api
+# Copies your code file from your action repository to the filesystem path `/` of the container
+COPY entrypoint.sh /entrypoint.sh
 
-#Copying all of the app files over
-# COPY ../package*.json ./
-# COPY ../ .
-COPY . .
-
-#Running npm install now that we have package.json and package-lock.json copied over
-RUN npm install
-
-# If you are building your code for production
-# RUN npm ci --only=production
-
-EXPOSE 3000
-
-ENV DB_HOST=$DB_HOST
-
-CMD [ "npm", "start" ]
+# Code file to execute when the docker container starts up (`entrypoint.sh`)
+ENTRYPOINT ["/entrypoint.sh"]
