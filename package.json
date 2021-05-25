@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/EJaona/Dock_test/issues"
   },
-  "homepage": "https://github.com/EJaona/Dock_test#readme"
+  "homepage": "https://github.com/EJaona/Dock_test#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
