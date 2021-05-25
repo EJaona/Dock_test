@@ -8,6 +8,5 @@ RUN npm install
 
 EXPOSE 3000
 
-RUN npm start
+CMD [ "npm", "start" ]
 
-RUN echo "npx newman run docterTest.postman_collection.json"

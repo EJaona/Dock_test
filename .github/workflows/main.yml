@@ -26,5 +26,16 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: testing
-        uses: ./integrationTestCloudBuild.yamls
+        uses: ./
+
+      - name: Run API Tests
+        id: run-newman
+        uses: anthonyvscode/newman-action@v1
+        with:
+          collection: docterTest.postman_collection.json
+          reporters: cli
+
+      - name: Output summary to console
+        run: echo ${{ steps.run-newman.outputs.summary }}
+      
 #testing this
