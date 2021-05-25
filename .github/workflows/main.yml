@@ -29,6 +29,5 @@ jobs:
         uses: ./
 
       - name: newman runn
-        uses: ./
         run: newman run
 #testing this
