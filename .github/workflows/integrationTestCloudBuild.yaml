@@ -1,3 +1,7 @@
+on:
+  pull_request:
+    branches: [ main ]
+
 steps:
   #This copys the environment from cloud storage, we are not currently using this but I would like to find out a way to use this for step 3.
   - id: "copy env"
