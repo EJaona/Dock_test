@@ -27,4 +27,8 @@ jobs:
       # Runs a single command using the runners shell
       - name: testing
         uses: ./
+
+      - name: newman runn
+        uses: ./
+        run: newman run
 #testing this
