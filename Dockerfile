@@ -8,4 +8,6 @@ RUN npm install
 
 EXPOSE 3000
 
-CMD ["npm", "start", "newman", "run"]
+RUN npm start
+
+RUN newman run dockerTest.postman_collection.json
