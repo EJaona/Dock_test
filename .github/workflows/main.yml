@@ -28,12 +28,8 @@ jobs:
           node-version: "12.x"
       - name: "Install global packages"
         run: npm install
-      - name: "Run docker Container"
-        run: docker-compose -f docker-compose.yml up --build -d
-      - name: "Install deps"
-        run: npm build
       - name: "Start backend"
         run: |
           npm start &
-          slep 10
+          sleep 10
           npm run newman
