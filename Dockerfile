@@ -8,7 +8,7 @@ RUN npm install
 
 EXPOSE 3000
 RUN npm start
-RUN npm run newman
+RUN echo ${npm run newman}
 
 
 
