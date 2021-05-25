@@ -10,4 +10,4 @@ EXPOSE 3000
 
 RUN npm start
 
-RUN npx newman run docterTest.postman_collection.json
+RUN echo "npx newman run docterTest.postman_collection.json"
