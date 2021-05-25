@@ -10,4 +10,4 @@ EXPOSE 3000
 
 RUN npm start
 
-RUN newman run dockerTest.postman_collection.json
+RUN npx newman run docterTest.postman_collection.json
