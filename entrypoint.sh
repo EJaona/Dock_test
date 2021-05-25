@@ -2,4 +2,5 @@
 
 npm install
 npm start
-npm run newman
+npx newman run docterTest.postman_collection.json
+echo 'Enoka is cool'
