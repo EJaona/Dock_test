@@ -1,40 +1,114 @@
-# This is a basic workflow to help you get started with Actions
+on:
+  pull_request:
+    branches: [ main ]
 
-# name: CI
+steps:
+  #This copys the environment from cloud storage, we are not currently using this but I would like to find out a way to use this for step 3.
+  - id: "copy env"
+    name: gcr.io/cloud-builders/gsutil
+    args: ["cp", "gs://wagr-develop.appspot.com/ci.env", "ci.env"]
 
-# Controls when the action will run. 
-# on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  # pull_request:
-  #   branches: [ main ]
+  #This installs all the necessary packages to run the unit tests, we should be leveraging this install in the containers.
+  - id: "compile api"
+    name: "gcr.io/cloud-builders/npm"
+    args: ["install"]
+    waitFor: ["copy env"]
 
-  # Allows you to run this workflow manually from the Actions tab
-  # workflow_dispatch:
+  #This injects the environment variables declared in cloudbuild, still looking for a better way to do this.
+  - id: "inject env"
+    name: "gcr.io/cloud-builders/npm"
+    dir: "api"
+    args: ["run", "create-env"]
+    env:
+      - "POSTGRES_USER=${_POSTGRES_USER}"
+      - "POSTGRES_PASSWORD=${_POSTGRES_PASSWORD}"
+      - "POSTGRES_DB=${_POSTGRES_DB}"
+      - "POSTGRES_HOST=${_POSTGRES_HOST}"
+      - "SPORTSDATA_API_KEY=${_SPORTSDATA_API_KEY}"
+      - "SPORTSRADAR_API_KEY=${_SPORTSRADAR_API_KEY}"
+      - "SPORTSRADAR_VHOST=${_SPORTSRADAR_VHOST}"
+      - "FIREBASE_API_KEY=${_FIREBASE_API_KEY}"
+      - "FIREBASE_AUTH_DOMAIN=${_FIREBASE_AUTH_DOMAIN}"
+      - "FIREBASE_DATABASE_URL=${_FIREBASE_DATABASE_URL}"
+      - "FIREBASE_PROJECT_ID=${_FIREBASE_PROJECT_ID}"
+      - "FIREBASE_STORGE_BUCKET=${_FIREBASE_STORGE_BUCKET}"
+      - "FIREBASE_MESSAGING_SENDER_ID=${_FIREBASE_MESSAGING_SENDER_ID}"
+      - "FIREBASE_APP_ID=${_FIREBASE_APP_ID}"
+      - "FIREBASE_MEASUREMENT_ID=${_FIREBASE_MEASUREMENT_ID}"
+      - "IDOLOGY_USERNAME=${_IDOLOGY_USERNAME}"
+      - "IDOLOGY_PASSWORD=${_IDOLOGY_PASSWORD}"
+      - "INTEGRATION_USER=${_INTEGRATION_USER}"
+      - "INTEGRATION_PASSWORD=${_INTEGRATION_PASSWORD}"
+      - "INTEGRATION_PASSWORD_SECONDARY=${_INTEGRATION_PASSWORD_SECONDARY}"
+      - "INTEGRATION_USER_SECONDARY=${_INTEGRATION_USER_SECONDARY}"
+      - "WAGR_SALT=${_WAGR_SALT}"
+    waitFor: ["compile api"]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
-# jobs:
-#   # This workflow contains a single job called "build"
-#   build:
-#     # The type of runner that the job will run on
-#     runs-on: ubuntu-latest
+  #Runs the node unit tests for the api
+  - id: "api unit tests"
+    name: "gcr.io/cloud-builders/npm"
+    args: ["test"]
+    waitFor: ["inject env"]
 
-#     # Steps represent a sequence of tasks that will be executed as part of the job
-#     steps:
-#       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-#       - uses: actions/checkout@v2
+  #Builds the node docker container
+  - id: "build api"
+    name: "gcr.io/cloud-builders/docker"
+    args: [
+        "build",
+        "--tag=api", # use local registry for compatibility with local builds
+        "--tag=gcr.io/$PROJECT_ID/api",
+        "--cache-from=gcr.io/$PROJECT_ID/api:latest",
+        "docker/api/.",
+      ]
+    waitFor: ["api unit tests"]
 
-#       # Runs a single command using the runners shell
-#       - name: testing
-#         uses: ./
+  #Builds the postgres docker container
+  - id: "build db"
+    name: "gcr.io/cloud-builders/docker"
+    args: [
+        "build",
+        "--tag=postgres", # use local registry for compatibility with local builds
+        "--tag=gcr.io/$PROJECT_ID/postgres",
+        "--cache-from=gcr.io/$PROJECT_ID/postgres:latest",
+        # Zach - point this at the wagr-shared tarball when you're ready (https://docs.docker.com/engine/reference/commandline/build/)
+        "docker/db/.",
+      ]
+    waitFor: ["-"] # start immediately
 
-#       # - name: Run API Tests
-#       #   id: run-newman
-#       #   uses: anthonyvscode/newman-action@v1
-#       #   with:
-#       #     collection: docterTest.postman_collection.json
-#       #     reporters: cli
+  #Runs the two containers we built previously and links them together.
+  - id: "compose up"
+    name: "gcr.io/$PROJECT_ID/docker-compose:latest"
+    entrypoint: "/bin/bash"
+    args:
+      - "-c"
+      - |
+        docker-compose -f docker/docker-compose.ci.yml up -d
+    env:
+      - "PROJECT_ID=$PROJECT_ID"
+    waitFor: ["build api", "build db"]
 
-#       # - name: Output summary to console
-#       #   run: echo ${{ steps.run-newman.outputs.summary }}
-      
-#testing this
+  #Runs the integration tests inside the api container using jest and targetting the integration group
+  - id: "integration tests"
+    name: "gcr.io/$PROJECT_ID/docker-compose:latest"
+    entrypoint: "/bin/bash"
+    args:
+      - "-c"
+      - |
+        docker-compose -f docker/docker-compose.ci.yml exec -T api npx jest --group=integration --detectOpenHandles --forceExit
+    waitFor: ["compose up"]
+
+  #burns down the docker environment, using the -v tag deletes the database
+  - id: "compose down"
+    name: "gcr.io/$PROJECT_ID/docker-compose:latest"
+    entrypoint: "/bin/bash"
+    args:
+      - "-c"
+      - |
+        docker-compose -f docker/docker-compose.ci.yml down -v
+    env:
+      - "PROJECT_ID=$PROJECT_ID"
+    waitFor: ["integration tests"]
+#this would store the images in our container registry
+#images:
+#- gcr.io/$PROJECT_ID/api
+#- gcr.io/$PROJECT_ID/mysql
