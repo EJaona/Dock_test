@@ -1,4 +1,4 @@
 #!/bin/sh -l
 
-echo npm -verson
-echo node -verson
+echo npm -v
+echo node -v
