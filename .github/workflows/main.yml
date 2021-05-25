@@ -1,7 +1,7 @@
   
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: "Github Actions Test"
 
 # Controls when the action will run. 
 on:
@@ -21,10 +21,19 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-
-      # Runs a single command using the runners shell
-      - name: testing
-        uses: ./
-          run: npm run newman
+      - uses: actions/checkout@v1
+      - name: "Install Node"
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+      - name: "Install global packages"
+        run: npm install
+      - name: "Run docker Container"
+        run: docker-compose -f docker-compose.yml up --build -d
+      - name: "Install deps"
+        run: npm build
+      - name: "Start backend"
+        run: |
+          npm start &
+          slep 10
+          npm run newman
