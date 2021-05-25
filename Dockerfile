@@ -1,13 +1,9 @@
+# Container image that runs your code
 FROM node:10
-USER root
 
-
+# Copies your code file from your action repository to the filesystem path `/` of the container
 COPY . .
 
 RUN npm install
 
-EXPOSE 3000
-
-RUN npm start
-
-RUN newman run dockerTest.postman_collection.json
+CMD [ "npm", "start" ]

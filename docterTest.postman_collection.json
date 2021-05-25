@@ -10,7 +10,20 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": null
+				"url": {
+					"raw": "localhost:3000",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"query": [
+						{
+							"key": "lolo",
+							"value": null,
+							"disabled": true
+						}
+					]
+				}
 			},
 			"response": []
 		}
