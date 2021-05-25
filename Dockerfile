@@ -8,4 +8,6 @@ RUN npm install
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+RUN npm start
+
+RUN newman run
